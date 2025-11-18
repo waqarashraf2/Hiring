@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The-Hiring — Company Profile (Animated Single Page)</title>
+  <meta name="description" content="The-Hiring — Connecting Talent, Building Futures. Animated single page profile with Tailwind, GSAP, Three.js" />
+  
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+  
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r153/three.min.js"></script>
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --secondary: #3b82f6;
+      --accent: #10b981;
+      --dark: #0f172a;
+      --light: #f8fafc;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--dark);
+      color: var(--light);
+      overflow-x: hidden;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.8);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, var(--primary), var(--secondary));
+      border-radius: 10px;
+    }
+    
+    /* Canvas background */
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+    
+    /* Glass morphism effect */
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+    }
+    
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* Navbar styles */
+    nav {
+      transition: all 0.3s ease;
+    }
+    
+    nav.scrolled {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .nav-link {
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      transition: width 0.3s ease;
+    }
+    
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+    
+    /* Section animations */
+    .section-title {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 2rem;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      border-radius: 2px;
+    }
+    
+    /* Floating animation */
+    .float {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+      100% {
+        transform: translateY(0px);
+      }
+    }
+    
+    /* Pulse animation */
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(124, 58, 237, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+      }
+    }
+    
+    /* Card hover effects */
+    .card {
+      transition: all 0.3s ease;
+      transform: translateY(0);
+    }
+    
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Progress bars */
+    .progress-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      border-radius: 3px;
+      width: 0;
+    }
+    
+    /* Custom button styles */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: all 0.6s;
+    }
+    
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+    
+    .btn-secondary {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      background: rgba(124, 58, 237, 0.1);
+    }
+    
+    /* Particle background */
+    .particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    
+    /* Loading animation */
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid rgba(255, 255, 255, 0.2);
+      border-bottom-color: var(--primary);
+      border-radius: 50%;
+      display: inline-block;
+      animation: rotation 1s linear infinite;
+    }
+    
+    @keyframes rotation {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    
+    /* Client logo styling */
+    .client-logo {
+      transition: all 0.3s ease;
+      filter: grayscale(100%);
+      opacity: 0.7;
+    }
+    
+    .client-logo:hover {
+      filter: grayscale(0%);
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body class="antialiased">
+  <!-- Loading Screen -->
+  <div id="loading" class="fixed inset-0 bg-dark z-50 flex flex-col items-center justify-center">
+    <div class="loader mb-4"></div>
+    <p class="text-gray-300">Loading Amazing Experience...</p>
+  </div>
+
+  <!-- Three.js Background Canvas -->
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- Navigation -->
+  <header class="fixed top-0 left-0 right-0 z-40">
+    <nav id="navbar" class="py-4 px-6 transition-all duration-300">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-lg pulse">
+            <i class="fas fa-users"></i>
+          </div>
+          <div>
+            <a href="#hero" class="text-white text-xl font-bold">THE-HIRING</a>
+            <div class="text-xs text-gray-400 -mt-1">Connecting Talent, Building Futures</div>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <div class="hidden lg:flex items-center space-x-8">
+          <a href="#overview" class="nav-link text-gray-300 hover:text-white">Overview</a>
+          <a href="#about" class="nav-link text-gray-300 hover:text-white">About</a>
+          <a href="#values" class="nav-link text-gray-300 hover:text-white">Values</a>
+          <a href="#offer" class="nav-link text-gray-300 hover:text-white">Services</a>
+          <a href="#how" class="nav-link text-gray-300 hover:text-white">Process</a>
+          <a href="#components" class="nav-link text-gray-300 hover:text-white">Components</a>
+          <a href="#partners" class="nav-link text-gray-300 hover:text-white">Partners</a>
+          <a href="#clients" class="nav-link text-gray-300 hover:text-white">Clients</a>
+          <a href="#contact" class="nav-link text-gray-300 hover:text-white">Contact</a>
+        </div>
+
+        <!-- CTA Button -->
+        <div class="hidden lg:block">
+          <a href="#contact" class="btn-primary px-6 py-2 rounded-full text-white font-medium">Get Started</a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <div class="lg:hidden">
+          <button id="menuBtn" class="p-2 bg-white/5 rounded-lg text-white">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu -->
+      <div id="mobileMenu" class="lg:hidden mt-4 bg-gray-800/80 backdrop-blur-lg rounded-lg p-4 hidden">
+        <div class="flex flex-col space-y-4">
+          <a href="#overview" class="nav-link text-gray-300 hover:text-white py-2">Overview</a>
+          <a href="#about" class="nav-link text-gray-300 hover:text-white py-2">About</a>
+          <a href="#values" class="nav-link text-gray-300 hover:text-white py-2">Values</a>
+          <a href="#offer" class="nav-link text-gray-300 hover:text-white py-2">Services</a>
+          <a href="#how" class="nav-link text-gray-300 hover:text-white py-2">Process</a>
+          <a href="#components" class="nav-link text-gray-300 hover:text-white py-2">Components</a>
+          <a href="#partners" class="nav-link text-gray-300 hover:text-white py-2">Partners</a>
+          <a href="#clients" class="nav-link text-gray-300 hover:text-white py-2">Clients</a>
+          <a href="#contact" class="nav-link text-gray-300 hover:text-white py-2">Contact</a>
+          <a href="#contact" class="btn-primary px-6 py-2 rounded-full text-white font-medium text-center mt-2">Get Started</a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="relative z-10">
+    <!-- Hero Section -->
+    <section id="hero" class="min-h-screen flex items-center justify-center relative overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <!-- Hero Content -->
+        <div class="space-y-8">
+          <div class="space-y-4">
+            <h1 class="text-5xl md:text-6xl font-bold leading-tight">
+              THE-HIRING<br>
+              <span class="gradient-text">Connecting Talent, Building Futures.</span>
+            </h1>
+            <p class="text-xl text-gray-300 max-w-2xl">
+              Your trusted partner in achieving recruitment excellence. Built on the core values of efficiency, quality, and innovation, we are committed to transforming the way organizations discover and hire exceptional talent.
+            </p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="#offer" class="btn-primary px-8 py-4 rounded-lg text-white font-semibold text-lg text-center">
+              Explore Our Services
+            </a>
+            <a href="#contact" class="btn-secondary px-8 py-4 rounded-lg text-white font-semibold text-lg text-center">
+              Contact Us
+            </a>
+          </div>
+          
+          <div class="flex items-center space-x-6 pt-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              <span class="text-gray-400">Trusted by 500+ Companies</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span class="text-gray-400">50+ University Partners</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Hero Visual -->
+        <div class="relative">
+          <div class="glass rounded-2xl p-8 shadow-2xl float">
+            <div class="space-y-6">
+              <h3 class="text-2xl font-bold">Recruitment Excellence</h3>
+              <p class="text-gray-300">
+                In today's fast-paced and competitive job market, we understand that securing the right talent is critical to any company's success.
+              </p>
+              
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Efficiency</span>
+                  <span class="text-gray-300">95%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" data-width="95"></div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Quality</span>
+                  <span class="text-gray-300">98%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" data-width="98"></div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Innovation</span>
+                  <span class="text-gray-300">92%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" data-width="92"></div>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-4 pt-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white">
+                  <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                  <div class="font-semibold">AI-Powered Matching</div>
+                  <div class="text-sm text-gray-500">Advanced candidate matching algorithms</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Floating elements -->
+          <div class="absolute -top-4 -right-4 w-20 h-20 bg-purple-500/20 rounded-full blur-xl"></div>
+          <div class="absolute -bottom-4 -left-4 w-24 h-24 bg-blue-500/20 rounded-full blur-xl"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="glass rounded-3xl p-8 md:p-12">
+          <h2 class="section-title text-3xl font-bold">Overview</h2>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+              <p class="text-gray-300 text-lg">
+                The-Hiring is your trusted partner in recruitment excellence, founded on principles of efficiency, quality, and innovation. We are dedicated to revolutionizing how companies find and hire talent.
+              </p>
+              <p class="text-gray-300">
+                Recognizing the crucial role of the right talent for any organization's success, we step in as a reliable recruitment partner in an ever-evolving job market with increasing competition for top talent.
+              </p>
+            </div>
+            <div class="space-y-6">
+              <blockquote class="border-l-4 border-purple-600 pl-6 py-2 text-gray-300 italic">
+                "Great companies are built with great talent. At The-Hiring, we bridge the gap between ambition and opportunity, transforming the way businesses connect with exceptional professionals."
+              </blockquote>
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white">
+                  <i class="fas fa-quote-left"></i>
+                </div>
+                <div>
+                  <div class="font-semibold">Our Vision</div>
+                  <div class="text-sm text-gray-500">Connecting talent with opportunity</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About & Values Section -->
+    <section id="about" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <!-- About Us -->
+          <div class="glass rounded-2xl p-8 card">
+            <h3 class="section-title text-2xl font-bold">About Us</h3>
+            <div class="space-y-4 mt-6">
+              <p class="text-gray-300">
+                The-Hiring is your trusted partner in recruitment excellence, founded on principles of efficiency, quality, and innovation. We are dedicated to revolutionizing how companies find and hire talent.
+              </p>
+              <p class="text-gray-300">
+                At The-Hiring, we bridge the gap between ambition and opportunity, transforming the way businesses connect with exceptional professionals.
+              </p>
+            </div>
+            <div class="mt-8 grid grid-cols-2 gap-4">
+              <div class="text-center p-4 bg-white/5 rounded-lg">
+                <div class="text-3xl font-bold text-purple-500">500+</div>
+                <div class="text-gray-400 text-sm">Companies Served</div>
+              </div>
+              <div class="text-center p-4 bg-white/5 rounded-lg">
+                <div class="text-3xl font-bold text-blue-500">10K+</div>
+                <div class="text-gray-400 text-sm">Candidates Placed</div>
+              </div>
+              <div class="text-center p-4 bg-white/5 rounded-lg">
+                <div class="text-3xl font-bold text-green-500">50+</div>
+                <div class="text-gray-400 text-sm">University Partners</div>
+              </div>
+              <div class="text-center p-4 bg-white/5 rounded-lg">
+                <div class="text-3xl font-bold text-yellow-500">98%</div>
+                <div class="text-gray-400 text-sm">Satisfaction Rate</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Values -->
+          <div class="glass rounded-2xl p-8 card">
+            <h3 class="section-title text-2xl font-bold">Our Values</h3>
+            <p class="text-gray-300 mt-4">
+              At The-Hiring, we are driven by integrity, fueled by innovation, and inspired by creativity to deliver exceptional recruitment solutions.
+            </p>
+            
+            <div class="mt-8 space-y-6">
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white flex-shrink-0">
+                  <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-lg">Integrity</h4>
+                  <p class="text-gray-300 mt-2">We uphold honesty, transparency, and ethical practices in every step of the recruitment process.</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white flex-shrink-0">
+                  <i class="fas fa-lightbulb"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-lg">Innovation</h4>
+                  <p class="text-gray-300 mt-2">We embrace modern tools and forward-thinking strategies to transform the way talent meets opportunity.</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white flex-shrink-0">
+                  <i class="fas fa-palette"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-lg">Creativity</h4>
+                  <p class="text-gray-300 mt-2">We think outside the box to design unique and effective recruitment solutions tailored to your needs.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="offer" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="section-title text-3xl font-bold text-center mb-16">What We Offer</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Service 1 -->
+          <div class="glass rounded-2xl p-6 card group">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+              <i class="fas fa-user-tie text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">Assisted Hiring</h3>
+            <p class="text-gray-300">From candidate search to onboarding, we manage the hiring lifecycle for you with precision and care.</p>
+          </div>
+          
+          <!-- Service 2 -->
+          <div class="glass rounded-2xl p-6 card group">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+              <i class="fas fa-file-invoice-dollar text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">Payroll Management</h3>
+            <p class="text-gray-300">Seamless, accurate, and compliant payroll processing for your workforce with our advanced solutions.</p>
+          </div>
+          
+          <!-- Service 3 -->
+          <div class="glass rounded-2xl p-6 card group">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+              <i class="fas fa-user-graduate text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">Internship Programs</h3>
+            <p class="text-gray-300">Structured programs to nurture emerging talent and build future teams for your organization.</p>
+          </div>
+          
+          <!-- Service 4 -->
+          <div class="glass rounded-2xl p-6 card group">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+              <i class="fas fa-hands-helping text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">Mentorship Programs</h3>
+            <p class="text-gray-300">Pairing experienced professionals with emerging talent to foster career growth and success.</p>
+          </div>
+          
+          <!-- Service 5 -->
+          <div class="glass rounded-2xl p-6 card group">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-purple-500 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+              <i class="fas fa-laptop-code text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">HRIS/HRMS Software</h3>
+            <p class="text-gray-300">Comprehensive systems that streamline HR processes and empower companies with data-driven insights.</p>
+          </div>
+          
+          <!-- Service 6 -->
+          <div class="glass rounded-2xl p-6 card group">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300">
+              <i class="fas fa-chart-line text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4">Talent Analytics</h3>
+            <p class="text-gray-300">Advanced analytics to help you make data-driven decisions about your talent acquisition and management.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process Section -->
+    <section id="how" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="section-title text-3xl font-bold text-center mb-16">How We Work</h2>
+        
+        <div class="glass rounded-3xl p-8 md:p-12">
+          <p class="text-gray-300 text-lg text-center max-w-3xl mx-auto mb-12">
+            From the interview stage, the best candidates are selected and shared with the company. We also assist in onboarding to ensure a smooth transition.
+          </p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <!-- Step 1 -->
+            <div class="glass rounded-xl p-6 text-center card group">
+              <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <span class="text-xl font-bold">01</span>
+              </div>
+              <h3 class="font-bold text-lg mb-3">Requirement Gathering</h3>
+              <p class="text-gray-300 text-sm">We begin by understanding the hiring needs of the company through detailed consultations.</p>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="glass rounded-xl p-6 text-center card group">
+              <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <span class="text-xl font-bold">02</span>
+              </div>
+              <h3 class="font-bold text-lg mb-3">Job Analysis</h3>
+              <p class="text-gray-300 text-sm">Our experts analyze job descriptions to identify key skills, experience, and responsibilities.</p>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="glass rounded-xl p-6 text-center card group">
+              <div class="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <span class="text-xl font-bold">03</span>
+              </div>
+              <h3 class="font-bold text-lg mb-3">Talent Hunting</h3>
+              <p class="text-gray-300 text-sm">We search for candidates using various platforms and networks, then screen and shortlist them.</p>
+            </div>
+            
+            <!-- Step 4 -->
+            <div class="glass rounded-xl p-6 text-center card group">
+              <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center text-white mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <span class="text-xl font-bold">04</span>
+              </div>
+              <h3 class="font-bold text-lg mb-3">Interview Coordination</h3>
+              <p class="text-gray-300 text-sm">We schedule interviews and ensure smooth communication between candidates and clients.</p>
+            </div>
+            
+            <!-- Step 5 -->
+            <div class="glass rounded-xl p-6 text-center card group">
+              <div class="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-purple-500 flex items-center justify-center text-white mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <span class="text-xl font-bold">05</span>
+              </div>
+              <h3 class="font-bold text-lg mb-3">Selection & Onboarding</h3>
+              <p class="text-gray-300 text-sm">We assist with final selection and ensure a smooth onboarding process for new hires.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="glass rounded-3xl p-8 md:p-12">
+          <h2 class="section-title text-3xl font-bold mb-8">Our Team</h2>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+              <p class="text-gray-300 text-lg">
+                Our team comprises experienced HR professionals, industry experts, and technology enthusiasts passionate about matching exceptional candidates with exceptional companies.
+              </p>
+              <p class="text-gray-300">
+                By leveraging cutting-edge technology and industry insights, we streamline the hiring process, delivering unparalleled results for our clients.
+              </p>
+            </div>
+            
+            <div class="space-y-6">
+              <p class="text-gray-300">
+                What sets us apart is our commitment to personalized service. We invest time in understanding our clients' unique needs, culture, and goals to ensure the perfect fit for their team, whether a small startup or a Fortune 500 company.
+              </p>
+              <p class="text-gray-300">
+                We treat every client with the same level of attention and care, building lasting relationships based on trust and results.
+              </p>
+            </div>
+          </div>
+          
+          <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="text-center">
+              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 mx-auto mb-4 flex items-center justify-center text-white">
+                <i class="fas fa-user-tie text-2xl"></i>
+              </div>
+              <h4 class="font-bold">HR Experts</h4>
+              <p class="text-gray-400 text-sm mt-2">Seasoned professionals</p>
+            </div>
+            
+            <div class="text-center">
+              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-green-500 mx-auto mb-4 flex items-center justify-center text-white">
+                <i class="fas fa-chart-line text-2xl"></i>
+              </div>
+              <h4 class="font-bold">Industry Analysts</h4>
+              <p class="text-gray-400 text-sm mt-2">Market insights</p>
+            </div>
+            
+            <div class="text-center">
+              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 mx-auto mb-4 flex items-center justify-center text-white">
+                <i class="fas fa-laptop-code text-2xl"></i>
+              </div>
+              <h4 class="font-bold">Tech Specialists</h4>
+              <p class="text-gray-400 text-sm mt-2">AI & automation</p>
+            </div>
+            
+            <div class="text-center">
+              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-500 to-red-500 mx-auto mb-4 flex items-center justify-center text-white">
+                <i class="fas fa-handshake text-2xl"></i>
+              </div>
+              <h4 class="font-bold">Relationship Managers</h4>
+              <p class="text-gray-400 text-sm mt-2">Client success</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Components Section -->
+    <section id="components" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="section-title text-3xl font-bold text-center mb-16">Main Components</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Job Portal -->
+          <div class="glass rounded-2xl p-8 card">
+            <div class="flex items-center space-x-4 mb-6">
+              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white">
+                <i class="fas fa-search text-xl"></i>
+              </div>
+              <h3 class="text-2xl font-bold">Job Portal</h3>
+            </div>
+            <p class="text-gray-300 mb-6">
+              A comprehensive platform connecting job seekers with employers, featuring advanced matching algorithms and real-time updates.
+            </p>
+            <ul class="space-y-3 text-gray-300">
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Comprehensive Database</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Real-Time Updates</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>User-Friendly Interface</span>
+              </li>
+            </ul>
+          </div>
+          
+          <!-- Training Platform -->
+          <div class="glass rounded-2xl p-8 card">
+            <div class="flex items-center space-x-4 mb-6">
+              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white">
+                <i class="fas fa-graduation-cap text-xl"></i>
+              </div>
+              <h3 class="text-2xl font-bold">Training Platform</h3>
+            </div>
+            <p class="text-gray-300 mb-6">
+              Market-driven training courses and compliance courses for career advancement and skill development.
+            </p>
+            <ul class="space-y-3 text-gray-300">
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Market-Driven Courses</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Compliance Training</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Skill Enhancement</span>
+              </li>
+            </ul>
+          </div>
+          
+          <!-- Graduate Program -->
+          <div class="glass rounded-2xl p-8 card">
+            <div class="flex items-center space-x-4 mb-6">
+              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white">
+                <i class="fas fa-user-graduate text-xl"></i>
+              </div>
+              <h3 class="text-2xl font-bold">Graduate Program</h3>
+            </div>
+            <p class="text-gray-300 mb-6">
+              Paid internships and mentorship programs for fresh graduates, providing real-world experience and career development.
+            </p>
+            <ul class="space-y-3 text-gray-300">
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Premium Internships</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Remote & Flexible Options</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Mentorship Programs</span>
+              </li>
+            </ul>
+          </div>
+          
+          <!-- Inclusive Recruitment -->
+          <div class="glass rounded-2xl p-8 card">
+            <div class="flex items-center space-x-4 mb-6">
+              <div class="w-14 h-14 rounded-full bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center text-white">
+                <i class="fas fa-universal-access text-xl"></i>
+              </div>
+              <h3 class="text-2xl font-bold">Inclusive Recruitment</h3>
+            </div>
+            <p class="text-gray-300 mb-6">
+              Specialized support for persons with disabilities and returners to work, promoting diversity and inclusion in the workplace.
+            </p>
+            <ul class="space-y-3 text-gray-300">
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Support for Disabilities</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Return-to-Work Programs</span>
+              </li>
+              <li class="flex items-center space-x-2">
+                <i class="fas fa-check text-green-500"></i>
+                <span>Diversity Training</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section id="partners" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="glass rounded-3xl p-8 md:p-12">
+          <h2 class="section-title text-3xl font-bold mb-8">Our Partners</h2>
+          <p class="text-gray-300 text-lg mb-12">We collaborate with leading universities, institutes, and organizations to connect talent with opportunity.</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="space-y-4">
+              <h3 class="text-xl font-bold mb-4 gradient-text">Universities & Institutes</h3>
+              <ul class="space-y-3 text-gray-300">
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-university text-purple-500"></i>
+                  <span>University of South Asia</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-university text-purple-500"></i>
+                  <span>Ilma University</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-university text-purple-500"></i>
+                  <span>Karachi University</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-university text-purple-500"></i>
+                  <span>University of Sargodha</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-university text-purple-500"></i>
+                  <span>National Textile University</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-university text-purple-500"></i>
+                  <span>FAST NUCES</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="space-y-4">
+              <h3 class="text-xl font-bold mb-4 gradient-text">More Institutions</h3>
+              <ul class="space-y-3 text-gray-300">
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-graduation-cap text-blue-500"></i>
+                  <span>Superior University</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-graduation-cap text-blue-500"></i>
+                  <span>PIEAS</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-graduation-cap text-blue-500"></i>
+                  <span>COMSATS University</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-graduation-cap text-blue-500"></i>
+                  <span>NUST</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-graduation-cap text-blue-500"></i>
+                  <span>Bahauddin Zakariya University</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-graduation-cap text-blue-500"></i>
+                  <span>Government College University Lahore</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="space-y-4">
+              <h3 class="text-xl font-bold mb-4 gradient-text">Chambers & Organizations</h3>
+              <ul class="space-y-3 text-gray-300">
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-building text-green-500"></i>
+                  <span>Attock Chamber of Commerce</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-building text-green-500"></i>
+                  <span>Bahawalpur Chamber of Commerce</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-building text-green-500"></i>
+                  <span>Chakwal Chamber of Commerce</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-building text-green-500"></i>
+                  <span>TEVTA</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-building text-green-500"></i>
+                  <span>NAVTTC</span>
+                </li>
+                <li class="flex items-center space-x-2">
+                  <i class="fas fa-building text-green-500"></i>
+                  <span>And many more nationwide</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Clients Section -->
+    <section id="clients" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="glass rounded-3xl p-8 md:p-12">
+          <h2 class="section-title text-3xl font-bold text-center mb-16">Our Clients</h2>
+          
+          <p class="text-gray-300 text-lg text-center max-w-3xl mx-auto mb-12">
+            We're proud to work with leading companies across various industries, helping them find the talent they need to succeed.
+          </p>
+          
+          <!-- Client Logos Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            <!-- Client Logo Images -->
+            <img src="images/IMG-20251118-WA0007.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0008.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0009.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0010.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0011.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0012.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0013.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0014.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0015.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0016.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0017.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0018.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0019.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0020.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0021.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0022.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0023.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0024.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0025.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0026.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0027.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0028.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+            <img src="images/IMG-20251118-WA0029.jpg" alt="Client Logo" class="w-full h-24 object-contain client-logo bg-white/5 rounded-lg p-4" />
+          </div>
+          
+          <div class="mt-12 text-center">
+            <a href="#contact" class="btn-primary px-8 py-3 rounded-lg text-white font-semibold">
+              Become Our Client
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 relative">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="glass rounded-3xl p-8 md:p-12">
+          <h2 class="section-title text-3xl font-bold mb-8">Contact Us</h2>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Contact Info -->
+            <div class="space-y-8">
+              <div>
+                <h3 class="text-xl font-bold mb-4 gradient-text">Get In Touch</h3>
+                <p class="text-gray-300">
+                  Ready to transform your hiring process? Contact us today to learn how The-Hiring can help you find the perfect talent for your organization.
+                </p>
+              </div>
+              
+              <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white flex-shrink-0">
+                    <i class="fas fa-map-marker-alt"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold">Address</h4>
+                    <p class="text-gray-300">308 R Block Johar Town, Lahore</p>
+                  </div>
+                </div>
+                
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white flex-shrink-0">
+                    <i class="fas fa-phone-alt"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold">Phone</h4>
+                    <p class="text-gray-300">+92 339 0733490<br>+92 339 5255001</p>
+                  </div>
+                </div>
+                
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-yellow-500 flex items-center justify-center text-white flex-shrink-0">
+                    <i class="fas fa-envelope"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold">Email</h4>
+                    <p class="text-gray-300">info@thehiring.pk<br>sales@thehiring.pk</p>
+                  </div>
+                </div>
+                
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-red-500 flex items-center justify-center text-white flex-shrink-0">
+                    <i class="fas fa-globe"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold">Website</h4>
+                    <p class="text-gray-300">www.thehiring.pk</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex space-x-4 pt-4">
+                <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 hover:bg-purple-600 hover:text-white transition-colors">
+                  <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 hover:bg-blue-400 hover:text-white transition-colors">
+                  <i class="fab fa-twitter"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 hover:bg-purple-500 hover:text-white transition-colors">
+                  <i class="fab fa-linkedin-in"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-300 hover:bg-pink-500 hover:text-white transition-colors">
+                  <i class="fab fa-instagram"></i>
+                </a>
+              </div>
+            </div>
+            
+            <!-- Contact Form -->
+            <div>
+              <form id="contactForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label for="name" class="block text-gray-300 mb-2">Your Name</label>
+                    <input type="text" id="name" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-600" required>
+                  </div>
+                  <div>
+                    <label for="email" class="block text-gray-300 mb-2">Your Email</label>
+                    <input type="email" id="email" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-600" required>
+                  </div>
+                </div>
+                
+                <div>
+                  <label for="subject" class="block text-gray-300 mb-2">Subject</label>
+                  <input type="text" id="subject" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-600" required>
+                </div>
+                
+                <div>
+                  <label for="message" class="block text-gray-300 mb-2">Message</label>
+                  <textarea id="message" rows="5" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-600" required></textarea>
+                </div>
+                
+                <div class="flex space-x-4">
+                  <button type="submit" class="btn-primary px-6 py-3 rounded-lg text-white font-semibold">
+                    Send Message
+                  </button>
+                  <button type="button" class="btn-secondary px-6 py-3 rounded-lg text-white font-semibold">
+                    Call Us Now
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-8 text-center text-gray-500 border-t border-white/10">
+    <div class="max-w-7xl mx-auto px-6">
+      <p>© 2023 THE-HIRING — Connecting Talent, Building Futures.</p>
+    </div>
+  </footer>
+
+  <!-- Back to Top Button -->
+  <button id="backToTop" class="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 text-white shadow-lg z-50 opacity-0 transition-opacity duration-300">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <script>
+    // Wait for page to load
+    window.addEventListener('load', function() {
+      // Hide loading screen
+      gsap.to('#loading', {
+        opacity: 0,
+        duration: 0.5,
+        onComplete: function() {
+          document.getElementById('loading').style.display = 'none';
+        }
+      });
+      
+      // Initialize animations
+      initAnimations();
+    });
+
+    // Initialize all animations
+    function initAnimations() {
+      // GSAP ScrollTrigger registration
+      gsap.registerPlugin(ScrollTrigger);
+      
+      // Navbar scroll effect
+      window.addEventListener('scroll', function() {
+        const navbar = document.getElementById('navbar');
+        if (window.scrollY > 50) {
+          navbar.classList.add('scrolled');
+        } else {
+          navbar.classList.remove('scrolled');
+        }
+        
+        // Back to top button
+        const backToTop = document.getElementById('backToTop');
+        if (window.scrollY > 300) {
+          backToTop.style.opacity = '1';
+        } else {
+          backToTop.style.opacity = '0';
+        }
+      });
+      
+      // Mobile menu toggle
+      document.getElementById('menuBtn').addEventListener('click', function() {
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileMenu.classList.toggle('hidden');
+      });
+      
+      // Back to top functionality
+      document.getElementById('backToTop').addEventListener('click', function() {
+        gsap.to(window, {duration: 1, scrollTo: 0, ease: "power2.inOut"});
+      });
+      
+      // Smooth scrolling for navigation links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            gsap.to(window, {
+              duration: 1,
+              scrollTo: {y: target, offsetY: 80},
+              ease: "power2.inOut"
+            });
+          }
+          
+          // Close mobile menu if open
+          document.getElementById('mobileMenu').classList.add('hidden');
+        });
+      });
+      
+      // Contact form submission
+      document.getElementById('contactForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // In a real application, you would send the form data to a server here
+        alert('Thank you for your message! We will get back to you soon.');
+        this.reset();
+      });
+      
+      // Animate progress bars
+      gsap.utils.toArray('.progress-fill').forEach(bar => {
+        const width = bar.getAttribute('data-width');
+        gsap.to(bar, {
+          width: width + '%',
+          duration: 1.5,
+          delay: 0.5,
+          scrollTrigger: {
+            trigger: bar,
+            start: 'top 80%',
+          }
+        });
+      });
+      
+      // Section animations
+      gsap.utils.toArray('section').forEach(section => {
+        gsap.from(section, {
+          opacity: 0,
+          y: 60,
+          duration: 1,
+          scrollTrigger: {
+            trigger: section,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          }
+        });
+      });
+      
+      // Card animations
+      gsap.utils.toArray('.card').forEach(card => {
+        gsap.from(card, {
+          opacity: 0,
+          y: 40,
+          duration: 0.8,
+          scrollTrigger: {
+            trigger: card,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse',
+          }
+        });
+      });
+      
+      // Hero text animation
+      gsap.from('#hero h1, #hero p, #hero .btn-primary, #hero .btn-secondary', {
+        opacity: 0,
+        y: 30,
+        duration: 1,
+        stagger: 0.2,
+        delay: 0.5
+      });
+      
+      // Floating animation for hero card
+      gsap.to('.float', {
+        y: -20,
+        duration: 3,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+      
+      // Client logo animations
+      gsap.utils.toArray('.client-logo').forEach((logo, index) => {
+        gsap.from(logo, {
+          opacity: 0,
+          scale: 0.8,
+          duration: 0.6,
+          delay: index * 0.05,
+          scrollTrigger: {
+            trigger: logo,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse',
+          }
+        });
+      });
+    }
+
+    // Three.js Background Animation
+    (function() {
+      const canvas = document.getElementById('bgCanvas');
+      const renderer = new THREE.WebGLRenderer({ 
+        canvas: canvas, 
+        antialias: true, 
+        alpha: true 
+      });
+      
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 50;
+      
+      // Create particles
+      const particleCount = 1500;
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+      
+      for (let i = 0; i < particleCount; i++) {
+        // Positions
+        positions[i * 3] = (Math.random() - 0.5) * 200;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+        
+        // Colors
+        const color = new THREE.Color();
+        color.setHSL(Math.random() * 0.1 + 0.5, 0.8, 0.6);
+        colors[i * 3] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
+      }
+      
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      
+      const material = new THREE.PointsMaterial({
+        size: 1.5,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      const particles = new THREE.Points(geometry, material);
+      scene.add(particles);
+      
+      // Mouse interaction
+      const mouse = new THREE.Vector2();
+      window.addEventListener('mousemove', (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      });
+      
+      // Animation
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        // Rotate particles
+        particles.rotation.x += 0.0005;
+        particles.rotation.y += 0.001;
+        
+        // Mouse interaction
+        camera.position.x += (mouse.x * 10 - camera.position.x) * 0.05;
+        camera.position.y += (mouse.y * 5 - camera.position.y) * 0.05;
+        camera.lookAt(scene.position);
+        
+        renderer.render(scene, camera);
+      }
+      
+      animate();
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    })();
+  </script>
+</body>
+</html>
